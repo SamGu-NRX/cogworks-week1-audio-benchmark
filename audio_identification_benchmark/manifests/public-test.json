@@ -1,0 +1,828 @@
+{
+ "corpus_stats": {
+  "hash_sample_songs": 6.0,
+  "max_cross_song_hash_overlap": 0.013797538122358993,
+  "mean_cross_song_hash_overlap": 0.010410861058726822,
+  "mean_reference_hashes_per_song": 25306.333333333332,
+  "mean_spectral_flux": 5.191548430076063,
+  "min_spectral_flux": 2.655879658307717
+ },
+ "corpus_version": "synth-v1",
+ "manifest_id": "week1-test-v1",
+ "master_seed": 20260817,
+ "out_of_set_songs": [
+  {
+   "duration_seconds": 12.0,
+   "seed": 1577404361,
+   "sha256": "99cd8588d3c52fcf0f81b0e05522d8d77429700fc0ea291acb8a6fef08aa6e85",
+   "song_id": "unseen-00"
+  },
+  {
+   "duration_seconds": 12.0,
+   "seed": 951865460,
+   "sha256": "df2d13de743c2a9047893a854bcc7e6cfc0908990279d7a8b5d1ee242532c55d",
+   "song_id": "unseen-01"
+  }
+ ],
+ "queries": [
+  {
+   "cell": "clean",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1967396751,
+   "offset_seconds": 2.5936,
+   "pitch_semitones": 0.0,
+   "query_id": "q0000",
+   "snr_db": null,
+   "source_song_id": "song-00"
+  },
+  {
+   "cell": "clean",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1317784945,
+   "offset_seconds": 5.0327,
+   "pitch_semitones": 0.0,
+   "query_id": "q0001",
+   "snr_db": null,
+   "source_song_id": "song-01"
+  },
+  {
+   "cell": "clean",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 988755953,
+   "offset_seconds": 3.8867,
+   "pitch_semitones": 0.0,
+   "query_id": "q0002",
+   "snr_db": null,
+   "source_song_id": "song-02"
+  },
+  {
+   "cell": "clean",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 359647479,
+   "offset_seconds": 1.0535,
+   "pitch_semitones": 0.0,
+   "query_id": "q0003",
+   "snr_db": null,
+   "source_song_id": "song-03"
+  },
+  {
+   "cell": "clean",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1931600436,
+   "offset_seconds": 2.06,
+   "pitch_semitones": 0.0,
+   "query_id": "q0004",
+   "snr_db": null,
+   "source_song_id": "song-04"
+  },
+  {
+   "cell": "clean",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1116341871,
+   "offset_seconds": 2.5485,
+   "pitch_semitones": 0.0,
+   "query_id": "q0005",
+   "snr_db": null,
+   "source_song_id": "song-05"
+  },
+  {
+   "cell": "clean",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1795501029,
+   "offset_seconds": 4.7357,
+   "pitch_semitones": 0.0,
+   "query_id": "q0006",
+   "snr_db": null,
+   "source_song_id": "song-06"
+  },
+  {
+   "cell": "clean",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 708902904,
+   "offset_seconds": 4.0725,
+   "pitch_semitones": 0.0,
+   "query_id": "q0007",
+   "snr_db": null,
+   "source_song_id": "song-07"
+  },
+  {
+   "cell": "short",
+   "clip_seconds": 2.0,
+   "in_set": true,
+   "noise_seed": 1214945292,
+   "offset_seconds": 5.6106,
+   "pitch_semitones": 0.0,
+   "query_id": "q0008",
+   "snr_db": null,
+   "source_song_id": "song-00"
+  },
+  {
+   "cell": "short",
+   "clip_seconds": 2.0,
+   "in_set": true,
+   "noise_seed": 1471171683,
+   "offset_seconds": 2.3358,
+   "pitch_semitones": 0.0,
+   "query_id": "q0009",
+   "snr_db": null,
+   "source_song_id": "song-01"
+  },
+  {
+   "cell": "short",
+   "clip_seconds": 2.0,
+   "in_set": true,
+   "noise_seed": 215685711,
+   "offset_seconds": 1.3085,
+   "pitch_semitones": 0.0,
+   "query_id": "q0010",
+   "snr_db": null,
+   "source_song_id": "song-02"
+  },
+  {
+   "cell": "short",
+   "clip_seconds": 2.0,
+   "in_set": true,
+   "noise_seed": 351781190,
+   "offset_seconds": 3.1502,
+   "pitch_semitones": 0.0,
+   "query_id": "q0011",
+   "snr_db": null,
+   "source_song_id": "song-03"
+  },
+  {
+   "cell": "short",
+   "clip_seconds": 2.0,
+   "in_set": true,
+   "noise_seed": 350089572,
+   "offset_seconds": 1.1257,
+   "pitch_semitones": 0.0,
+   "query_id": "q0012",
+   "snr_db": null,
+   "source_song_id": "song-04"
+  },
+  {
+   "cell": "short",
+   "clip_seconds": 2.0,
+   "in_set": true,
+   "noise_seed": 532797622,
+   "offset_seconds": 2.1083,
+   "pitch_semitones": 0.0,
+   "query_id": "q0013",
+   "snr_db": null,
+   "source_song_id": "song-05"
+  },
+  {
+   "cell": "short",
+   "clip_seconds": 2.0,
+   "in_set": true,
+   "noise_seed": 854056862,
+   "offset_seconds": 2.955,
+   "pitch_semitones": 0.0,
+   "query_id": "q0014",
+   "snr_db": null,
+   "source_song_id": "song-06"
+  },
+  {
+   "cell": "short",
+   "clip_seconds": 2.0,
+   "in_set": true,
+   "noise_seed": 676247376,
+   "offset_seconds": 2.6682,
+   "pitch_semitones": 0.0,
+   "query_id": "q0015",
+   "snr_db": null,
+   "source_song_id": "song-07"
+  },
+  {
+   "cell": "noisy",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 934879218,
+   "offset_seconds": 1.3994,
+   "pitch_semitones": 0.0,
+   "query_id": "q0016",
+   "snr_db": 0.0,
+   "source_song_id": "song-00"
+  },
+  {
+   "cell": "noisy",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 711679683,
+   "offset_seconds": 3.0531,
+   "pitch_semitones": 0.0,
+   "query_id": "q0017",
+   "snr_db": 0.0,
+   "source_song_id": "song-01"
+  },
+  {
+   "cell": "noisy",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 229526082,
+   "offset_seconds": 4.6598,
+   "pitch_semitones": 0.0,
+   "query_id": "q0018",
+   "snr_db": 0.0,
+   "source_song_id": "song-02"
+  },
+  {
+   "cell": "noisy",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1618091039,
+   "offset_seconds": 2.3506,
+   "pitch_semitones": 0.0,
+   "query_id": "q0019",
+   "snr_db": 0.0,
+   "source_song_id": "song-03"
+  },
+  {
+   "cell": "noisy",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1041318798,
+   "offset_seconds": 1.2212,
+   "pitch_semitones": 0.0,
+   "query_id": "q0020",
+   "snr_db": 0.0,
+   "source_song_id": "song-04"
+  },
+  {
+   "cell": "noisy",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1484033901,
+   "offset_seconds": 1.3819,
+   "pitch_semitones": 0.0,
+   "query_id": "q0021",
+   "snr_db": 0.0,
+   "source_song_id": "song-05"
+  },
+  {
+   "cell": "noisy",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 2081750602,
+   "offset_seconds": 3.4477,
+   "pitch_semitones": 0.0,
+   "query_id": "q0022",
+   "snr_db": 0.0,
+   "source_song_id": "song-06"
+  },
+  {
+   "cell": "noisy",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 947774100,
+   "offset_seconds": 1.1563,
+   "pitch_semitones": 0.0,
+   "query_id": "q0023",
+   "snr_db": 0.0,
+   "source_song_id": "song-07"
+  },
+  {
+   "cell": "noisy_mid",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1458536109,
+   "offset_seconds": 2.6802,
+   "pitch_semitones": 0.0,
+   "query_id": "q0024",
+   "snr_db": 10.0,
+   "source_song_id": "song-00"
+  },
+  {
+   "cell": "noisy_mid",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1888738143,
+   "offset_seconds": 1.6967,
+   "pitch_semitones": 0.0,
+   "query_id": "q0025",
+   "snr_db": 10.0,
+   "source_song_id": "song-01"
+  },
+  {
+   "cell": "noisy_mid",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 523385411,
+   "offset_seconds": 3.2973,
+   "pitch_semitones": 0.0,
+   "query_id": "q0026",
+   "snr_db": 10.0,
+   "source_song_id": "song-02"
+  },
+  {
+   "cell": "noisy_mid",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 194478483,
+   "offset_seconds": 4.3858,
+   "pitch_semitones": 0.0,
+   "query_id": "q0027",
+   "snr_db": 10.0,
+   "source_song_id": "song-03"
+  },
+  {
+   "cell": "noisy_mid",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1630890971,
+   "offset_seconds": 3.565,
+   "pitch_semitones": 0.0,
+   "query_id": "q0028",
+   "snr_db": 10.0,
+   "source_song_id": "song-04"
+  },
+  {
+   "cell": "noisy_mid",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1617626248,
+   "offset_seconds": 1.4117,
+   "pitch_semitones": 0.0,
+   "query_id": "q0029",
+   "snr_db": 10.0,
+   "source_song_id": "song-05"
+  },
+  {
+   "cell": "noisy_mid",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 197413024,
+   "offset_seconds": 4.3567,
+   "pitch_semitones": 0.0,
+   "query_id": "q0030",
+   "snr_db": 10.0,
+   "source_song_id": "song-06"
+  },
+  {
+   "cell": "noisy_mid",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1951929371,
+   "offset_seconds": 3.873,
+   "pitch_semitones": 0.0,
+   "query_id": "q0031",
+   "snr_db": 10.0,
+   "source_song_id": "song-07"
+  },
+  {
+   "cell": "pitch_down_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1678464435,
+   "offset_seconds": 5.3775,
+   "pitch_semitones": -2.0,
+   "query_id": "q0032",
+   "snr_db": null,
+   "source_song_id": "song-00"
+  },
+  {
+   "cell": "pitch_down_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1331870517,
+   "offset_seconds": 4.1901,
+   "pitch_semitones": -2.0,
+   "query_id": "q0033",
+   "snr_db": null,
+   "source_song_id": "song-01"
+  },
+  {
+   "cell": "pitch_down_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 405555716,
+   "offset_seconds": 2.252,
+   "pitch_semitones": -2.0,
+   "query_id": "q0034",
+   "snr_db": null,
+   "source_song_id": "song-02"
+  },
+  {
+   "cell": "pitch_down_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 927752792,
+   "offset_seconds": 1.9138,
+   "pitch_semitones": -2.0,
+   "query_id": "q0035",
+   "snr_db": null,
+   "source_song_id": "song-03"
+  },
+  {
+   "cell": "pitch_down_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 107531873,
+   "offset_seconds": 5.8044,
+   "pitch_semitones": -2.0,
+   "query_id": "q0036",
+   "snr_db": null,
+   "source_song_id": "song-04"
+  },
+  {
+   "cell": "pitch_down_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1822923763,
+   "offset_seconds": 4.8474,
+   "pitch_semitones": -2.0,
+   "query_id": "q0037",
+   "snr_db": null,
+   "source_song_id": "song-05"
+  },
+  {
+   "cell": "pitch_down_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 937333115,
+   "offset_seconds": 3.9533,
+   "pitch_semitones": -2.0,
+   "query_id": "q0038",
+   "snr_db": null,
+   "source_song_id": "song-06"
+  },
+  {
+   "cell": "pitch_down_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1686665926,
+   "offset_seconds": 2.5892,
+   "pitch_semitones": -2.0,
+   "query_id": "q0039",
+   "snr_db": null,
+   "source_song_id": "song-07"
+  },
+  {
+   "cell": "pitch_down_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1061335681,
+   "offset_seconds": 5.2996,
+   "pitch_semitones": -1.0,
+   "query_id": "q0040",
+   "snr_db": null,
+   "source_song_id": "song-00"
+  },
+  {
+   "cell": "pitch_down_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1994609891,
+   "offset_seconds": 1.7962,
+   "pitch_semitones": -1.0,
+   "query_id": "q0041",
+   "snr_db": null,
+   "source_song_id": "song-01"
+  },
+  {
+   "cell": "pitch_down_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1220095727,
+   "offset_seconds": 3.7848,
+   "pitch_semitones": -1.0,
+   "query_id": "q0042",
+   "snr_db": null,
+   "source_song_id": "song-02"
+  },
+  {
+   "cell": "pitch_down_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 833520889,
+   "offset_seconds": 4.8575,
+   "pitch_semitones": -1.0,
+   "query_id": "q0043",
+   "snr_db": null,
+   "source_song_id": "song-03"
+  },
+  {
+   "cell": "pitch_down_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1046130815,
+   "offset_seconds": 5.8122,
+   "pitch_semitones": -1.0,
+   "query_id": "q0044",
+   "snr_db": null,
+   "source_song_id": "song-04"
+  },
+  {
+   "cell": "pitch_down_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1745221331,
+   "offset_seconds": 3.6295,
+   "pitch_semitones": -1.0,
+   "query_id": "q0045",
+   "snr_db": null,
+   "source_song_id": "song-05"
+  },
+  {
+   "cell": "pitch_down_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1490251737,
+   "offset_seconds": 3.3568,
+   "pitch_semitones": -1.0,
+   "query_id": "q0046",
+   "snr_db": null,
+   "source_song_id": "song-06"
+  },
+  {
+   "cell": "pitch_down_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 453863044,
+   "offset_seconds": 4.2367,
+   "pitch_semitones": -1.0,
+   "query_id": "q0047",
+   "snr_db": null,
+   "source_song_id": "song-07"
+  },
+  {
+   "cell": "pitch_up_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 978100315,
+   "offset_seconds": 3.1051,
+   "pitch_semitones": 1.0,
+   "query_id": "q0048",
+   "snr_db": null,
+   "source_song_id": "song-00"
+  },
+  {
+   "cell": "pitch_up_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 328136012,
+   "offset_seconds": 1.5438,
+   "pitch_semitones": 1.0,
+   "query_id": "q0049",
+   "snr_db": null,
+   "source_song_id": "song-01"
+  },
+  {
+   "cell": "pitch_up_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 859978381,
+   "offset_seconds": 3.9316,
+   "pitch_semitones": 1.0,
+   "query_id": "q0050",
+   "snr_db": null,
+   "source_song_id": "song-02"
+  },
+  {
+   "cell": "pitch_up_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1172594138,
+   "offset_seconds": 2.8525,
+   "pitch_semitones": 1.0,
+   "query_id": "q0051",
+   "snr_db": null,
+   "source_song_id": "song-03"
+  },
+  {
+   "cell": "pitch_up_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1359812205,
+   "offset_seconds": 2.2855,
+   "pitch_semitones": 1.0,
+   "query_id": "q0052",
+   "snr_db": null,
+   "source_song_id": "song-04"
+  },
+  {
+   "cell": "pitch_up_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 746677652,
+   "offset_seconds": 1.1691,
+   "pitch_semitones": 1.0,
+   "query_id": "q0053",
+   "snr_db": null,
+   "source_song_id": "song-05"
+  },
+  {
+   "cell": "pitch_up_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1846374820,
+   "offset_seconds": 1.5945,
+   "pitch_semitones": 1.0,
+   "query_id": "q0054",
+   "snr_db": null,
+   "source_song_id": "song-06"
+  },
+  {
+   "cell": "pitch_up_1",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 545040280,
+   "offset_seconds": 5.7449,
+   "pitch_semitones": 1.0,
+   "query_id": "q0055",
+   "snr_db": null,
+   "source_song_id": "song-07"
+  },
+  {
+   "cell": "pitch_up_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1298142685,
+   "offset_seconds": 2.3762,
+   "pitch_semitones": 2.0,
+   "query_id": "q0056",
+   "snr_db": null,
+   "source_song_id": "song-00"
+  },
+  {
+   "cell": "pitch_up_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1121411782,
+   "offset_seconds": 1.3998,
+   "pitch_semitones": 2.0,
+   "query_id": "q0057",
+   "snr_db": null,
+   "source_song_id": "song-01"
+  },
+  {
+   "cell": "pitch_up_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 556659757,
+   "offset_seconds": 3.1314,
+   "pitch_semitones": 2.0,
+   "query_id": "q0058",
+   "snr_db": null,
+   "source_song_id": "song-02"
+  },
+  {
+   "cell": "pitch_up_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 125910556,
+   "offset_seconds": 3.8245,
+   "pitch_semitones": 2.0,
+   "query_id": "q0059",
+   "snr_db": null,
+   "source_song_id": "song-03"
+  },
+  {
+   "cell": "pitch_up_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1256550372,
+   "offset_seconds": 5.2069,
+   "pitch_semitones": 2.0,
+   "query_id": "q0060",
+   "snr_db": null,
+   "source_song_id": "song-04"
+  },
+  {
+   "cell": "pitch_up_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1910136607,
+   "offset_seconds": 4.4492,
+   "pitch_semitones": 2.0,
+   "query_id": "q0061",
+   "snr_db": null,
+   "source_song_id": "song-05"
+  },
+  {
+   "cell": "pitch_up_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 1256759650,
+   "offset_seconds": 1.5882,
+   "pitch_semitones": 2.0,
+   "query_id": "q0062",
+   "snr_db": null,
+   "source_song_id": "song-06"
+  },
+  {
+   "cell": "pitch_up_2",
+   "clip_seconds": 6.0,
+   "in_set": true,
+   "noise_seed": 901493464,
+   "offset_seconds": 4.776,
+   "pitch_semitones": 2.0,
+   "query_id": "q0063",
+   "snr_db": null,
+   "source_song_id": "song-07"
+  },
+  {
+   "cell": "out_of_set",
+   "clip_seconds": 6.0,
+   "in_set": false,
+   "noise_seed": 1046914179,
+   "offset_seconds": 1.6079,
+   "pitch_semitones": 0.0,
+   "query_id": "q0064",
+   "snr_db": null,
+   "source_song_id": "unseen-00"
+  },
+  {
+   "cell": "out_of_set",
+   "clip_seconds": 6.0,
+   "in_set": false,
+   "noise_seed": 151400156,
+   "offset_seconds": 2.5414,
+   "pitch_semitones": 0.0,
+   "query_id": "q0065",
+   "snr_db": null,
+   "source_song_id": "unseen-00"
+  },
+  {
+   "cell": "out_of_set",
+   "clip_seconds": 6.0,
+   "in_set": false,
+   "noise_seed": 1610540921,
+   "offset_seconds": 1.1018,
+   "pitch_semitones": 0.0,
+   "query_id": "q0066",
+   "snr_db": null,
+   "source_song_id": "unseen-01"
+  },
+  {
+   "cell": "out_of_set",
+   "clip_seconds": 6.0,
+   "in_set": false,
+   "noise_seed": 1749309924,
+   "offset_seconds": 5.0046,
+   "pitch_semitones": 0.0,
+   "query_id": "q0067",
+   "snr_db": null,
+   "source_song_id": "unseen-01"
+  }
+ ],
+ "sample_rate": 44100,
+ "songs": [
+  {
+   "duration_seconds": 12.0,
+   "seed": 1384103405,
+   "sha256": "bfae612593acc391462439aa7df95ec63db88a3b4977e635b4f3ae4f395207e3",
+   "song_id": "song-00"
+  },
+  {
+   "duration_seconds": 12.0,
+   "seed": 156769796,
+   "sha256": "e5b741853dd7e8cef9475f3f38f16740a7524f3be38e1347a90af551ab327f3f",
+   "song_id": "song-01"
+  },
+  {
+   "duration_seconds": 12.0,
+   "seed": 1228269294,
+   "sha256": "6901bda2b57b96b0ce8821f74ef07b3a70adad412e6205fe5a03ddb79072a112",
+   "song_id": "song-02"
+  },
+  {
+   "duration_seconds": 12.0,
+   "seed": 1908292804,
+   "sha256": "e5b7d4bdcd288b03599eae6d51091f59634a79ee406d4cd4f3e8ac7b4925bbbe",
+   "song_id": "song-03"
+  },
+  {
+   "duration_seconds": 12.0,
+   "seed": 394500106,
+   "sha256": "a2e3c96515bf0c6c355462060c0ae674bb221425bbf34d590e314845a0476dde",
+   "song_id": "song-04"
+  },
+  {
+   "duration_seconds": 12.0,
+   "seed": 1021401739,
+   "sha256": "ae3013947dcf1b6cdd11f434da2b06064a5fe21e391f256b7c61e20cbc9fc9a2",
+   "song_id": "song-05"
+  },
+  {
+   "duration_seconds": 12.0,
+   "seed": 762865578,
+   "sha256": "4562248a947e5e67c91932a66c851d1fedeac1f209d3b709ef144404d98a6f66",
+   "song_id": "song-06"
+  },
+  {
+   "duration_seconds": 12.0,
+   "seed": 920951893,
+   "sha256": "ce7c28cff5026bfaac0d99b2a32241f7fd1107625a72cab05a881801070d361e",
+   "song_id": "song-07"
+  }
+ ]
+}
