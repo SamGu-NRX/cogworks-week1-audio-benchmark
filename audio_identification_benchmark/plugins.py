@@ -51,6 +51,14 @@ class AudioIdentificationBenchmark:
     #: across the whole sweep, which is the good answer and would read wrong
     #: as a zero.
     conditional_metrics = {"margin_separation", "catalog_knee"}
+
+    #: How the run page labels and reads this benchmark's difficulty sweep.
+    #: The axis is in the course's words, since the page draws an axis it
+    #: cannot otherwise name; the two keys say which fields of `last_sweep`
+    #: are the coordinates.
+    sweep_axis_label = "songs in the library"
+    sweep_x_key = "catalog_size"
+    sweep_y_key = "top1"
     lower_is_better = {
         "retrieval_failure_rate",
         "ranking_failure_rate",
