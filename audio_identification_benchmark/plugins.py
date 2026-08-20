@@ -220,6 +220,18 @@ class AudioIdentificationBenchmark:
 
         return {"ready": True, "path": "", "message": "corpus is generated locally"}
 
+    def submission_from_discovery(self, submission: Any) -> Any:
+        """Turn a resolved repository into the object ``run`` expects.
+
+        The pairing between what discovery finds and what this benchmark's
+        driver calls is this benchmark's to define, which is why it is a method
+        here rather than something the resolver knows how to do.
+        """
+
+        from .discovered import build
+
+        return build(submission)
+
     def discovery(self) -> Any:
         """What to look for in a repository that never packaged itself.
 
