@@ -383,9 +383,43 @@ def _attempt(enroll_call, query_call, prints):
         )
 
     best = _winner(answer)
-    if best == target:
-        return True, "identified {} from a two-second clip".format(target)
-    return False, "asked for {} and got {}".format(target, best if best else repr(answer)[:60])
+    if best != target:
+        return False, "asked for {} and got {}".format(
+            target, best if best else repr(answer)[:60]
+        )
+
+    # Named the right song, so this pairing works. How completely it answered
+    # decides which of their own functions the search settles on when several
+    # work. One 2026 team wrote `query`, returning the winning song, and
+    # `query_details`, returning the same winner plus their whole vote tally.
+    # Both are right and the benchmark scores a ranked list, so binding the
+    # first one reached cost that team every metric below rank 1.
+    #
+    # This reads what came back. It never judges their algorithm: a badly
+    # tuned fanout should be scored badly by the benchmark, not preferred or
+    # refused here.
+    if _ranks_more_than_one(answer):
+        return 1.0, "identified {} and ranked the rest".format(target)
+    return 0.5, "identified {} from a two-second clip".format(target)
+
+
+def _ranks_more_than_one(answer: Any) -> bool:
+    """Whether their answer says anything below rank 1.
+
+    The benchmark's ranking metrics read positions two and beyond, and an
+    answer that is one song name leaves those empty. A dict is unwrapped the
+    same way `_winner` unwraps it, because the ranking lives inside a key in
+    at least one repository.
+    """
+
+    if isinstance(answer, str) or answer is None:
+        return False
+    if isinstance(answer, dict):
+        return any(_ranks_more_than_one(value) for value in answer.values())
+    try:
+        return len(list(answer)) > 1
+    except TypeError:
+        return False
 
 
 def _shallow(value: Any) -> Any:
