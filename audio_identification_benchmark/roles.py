@@ -214,6 +214,12 @@ FINGERPRINT_ROLE = Role(
             "peaks",
             prefers=("peak", "local_max", "maxima"),
             produces=looks_like_peaks,
+            # One 2026 team wrote `identifying_peaks(samples, rate)`, which
+            # computes the spectrogram and finds its peaks in one function.
+            # The course names two steps; they wrote one, and it does both.
+            # Insisting on a separate spectrogram would refuse a complete
+            # working pipeline over how it was divided into functions.
+            fusible=True,
         ),
         Stage(
             "fingerprints",
