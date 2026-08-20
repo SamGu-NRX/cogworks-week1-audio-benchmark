@@ -23,7 +23,9 @@ is a worse error than a slower search. Only the acceptance test decides.
 from __future__ import annotations
 
 import contextlib
+import io
 import os
+import sys
 import tempfile
 from typing import Any, Sequence
 
@@ -160,6 +162,8 @@ def looks_like_ranking(value: Any) -> bool:
 
     if isinstance(value, str):
         return True
+    if isinstance(value, dict):
+        return any(looks_like_ranking(entry) for entry in value.values())
     try:
         first = next(iter(value))
     except (TypeError, StopIteration):
@@ -251,11 +255,18 @@ def _fresh_state():
     """
 
     previous = os.getcwd()
+    saved_out, saved_err = sys.stdout, sys.stderr
     with tempfile.TemporaryDirectory(prefix="cogworks-accept-") as temporary:
         os.chdir(temporary)
+        # Their functions narrate: one prints every fingerprint it builds,
+        # thousands of lines per call. That output belongs to their run, not
+        # to the search for which of their functions to call.
+        sys.stdout = io.StringIO()
+        sys.stderr = io.StringIO()
         try:
             yield
         finally:
+            sys.stdout, sys.stderr = saved_out, saved_err
             os.chdir(previous)
 
 
@@ -308,10 +319,24 @@ def _run(chain: Sequence[Any], signal: np.ndarray, sample_rate: int) -> Any:
 
 
 def _winner(answer: Any) -> str:
-    """The song a submission named, whatever shape it said it in."""
+    """The song a submission named, whatever shape it said it in.
+
+    Teams return a bare id, a ranked list, a list of ``(id, score)`` pairs, or
+    a dict holding several of those at once. One repository's ``query`` returns
+    ``{"best_matches": ..., "ranked": [...], "offsets": ...}``, and reading the
+    first key of that dict yields ``best_matches``, which is not a song. So a
+    dict is unwrapped by looking for the entry that holds a ranking rather than
+    by taking whatever comes first.
+    """
 
     if isinstance(answer, str):
         return answer
+    if isinstance(answer, dict):
+        for value in answer.values():
+            named = _winner(value)
+            if named:
+                return named
+        return ""
     try:
         first = next(iter(answer))
     except (TypeError, StopIteration):
@@ -319,7 +344,7 @@ def _winner(answer: Any) -> str:
     if isinstance(first, str):
         return first
     if isinstance(first, (tuple, list)) and first:
-        return str(first[0])
+        return _winner(first[0]) if not isinstance(first[0], str) else first[0]
     return ""
 
 
