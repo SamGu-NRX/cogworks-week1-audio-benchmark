@@ -23,6 +23,7 @@ is a worse error than a slower search. Only the acceptance test decides.
 from __future__ import annotations
 
 import contextlib
+import copy
 import io
 import os
 import sys
@@ -47,6 +48,7 @@ __all__ = [
     "looks_like_peaks",
     "looks_like_fingerprints",
     "looks_like_ranking",
+    "forget_fingerprints",
 ]
 
 #: Long enough that a peak picker has something to find. A pure tone yields
@@ -61,15 +63,33 @@ FIXTURE_SPECS = (
 )
 
 
+#: The rendered fixture, kept after the first render.
+#: Rendering is deliberately exact: `exactmath` computes its own sin and exp so
+#: every machine produces identical samples, and that costs about 60ms a song.
+#: A search that tries 3962 pairings rendered them 3962 times for 248 seconds
+#: of a 352-second check, all of it recomputing a constant.
+_RENDERED: dict = {}
+
+
 def fixture_songs(sample_rate: int = SAMPLE_RATE):
     """Two rendered songs, identical on every machine.
 
     Rendered rather than recorded so the fixture ships as code, and rendered by
     the same generator the scored corpus uses so a chain that works here works
     there.
+
+    The arrays are handed out read-only, because they are now shared. A student
+    function that writes into its input would otherwise change what every later
+    attempt is asked about, and the search would start depending on its own
+    order.
     """
 
-    return synth.render_corpus(FIXTURE_SPECS, sample_rate, verify=False)
+    if sample_rate not in _RENDERED:
+        songs = synth.render_corpus(FIXTURE_SPECS, sample_rate, verify=False)
+        for signal in songs.values():
+            signal.flags.writeable = False
+        _RENDERED[sample_rate] = songs
+    return _RENDERED[sample_rate]
 
 
 def fixture_clip(signal: np.ndarray, sample_rate: int = SAMPLE_RATE) -> np.ndarray:
@@ -238,8 +258,59 @@ def accepts(fingerprint_chain, enroll_call, query_call, sample_rate: int = SAMPL
     """
 
     songs = fixture_songs(sample_rate)
+    try:
+        prints = _fingerprinted(fingerprint_chain, songs, sample_rate)
+    except BaseException as error:  # noqa: BLE001 - student code raises anything
+        return False, "fingerprinting raised {}: {}".format(
+            type(error).__name__, str(error)[:120]
+        )
     with _fresh_state():
-        return _attempt(fingerprint_chain, enroll_call, query_call, songs, sample_rate)
+        return _attempt(enroll_call, query_call, prints)
+
+
+#: Fingerprints for the fixture, keyed by the chain that produced them.
+#: One repository tries 3962 store-and-query pairings, and the chain is already
+#: bound by then: the same two songs and the same clip go through the same
+#: three functions every time, for the same answer. Running them once took a
+#: 278-second check down to 21. Keyed on the chain because a different chain is
+#: a different answer, and cleared per resolution because holding a student's
+#: arrays after their run is memory nobody asked us to keep.
+_FINGERPRINTED: dict = {}
+
+#: The clip is cut from this song, so this is the id a correct binding names.
+TARGET = "fixture_a"
+
+
+def _fingerprinted(chain: Sequence[Any], songs, sample_rate: int):
+    """Fingerprints for both fixture songs and the query clip, computed once.
+
+    Their fingerprinting is pure with respect to the search: it turns audio
+    into fingerprints and the search never changes the audio. Whatever it
+    writes to disk while doing so happens under `_fresh_state` the first time
+    and is not part of what enrolling reads back, because enrolling is what
+    gets the fresh directory per attempt.
+    """
+
+    key = tuple(step.label for step in chain)
+    if key not in _FINGERPRINTED:
+        with _fresh_state():
+            enrolled = [
+                (song_id, _run(chain, signal, sample_rate))
+                for song_id, signal in songs.items()
+            ]
+            asked = _run(chain, fixture_clip(songs[TARGET], sample_rate), sample_rate)
+        _FINGERPRINTED[key] = (enrolled, asked)
+    return _FINGERPRINTED[key]
+
+
+def forget_fingerprints() -> None:
+    """Drop the cached fixture fingerprints.
+
+    Called when a resolution finishes. Their arrays can be large and there is
+    no reason to hold them after the search that needed them is over.
+    """
+
+    _FINGERPRINTED.clear()
 
 
 @contextlib.contextmanager
@@ -270,10 +341,21 @@ def _fresh_state():
             os.chdir(previous)
 
 
-def _attempt(fingerprint_chain, enroll_call, query_call, songs, sample_rate):
+def _attempt(enroll_call, query_call, prints):
+    # A copy per attempt, because the fingerprints are computed once and handed
+    # to thousands of candidate stores. A store that sorts its argument in place
+    # or pops from it would otherwise change what later attempts are given, and
+    # the search would start depending on its own order.
+    #
+    # Shallow, not deep. Fingerprints are a list of immutable tuples, and
+    # copying five thousand of those element by element cost 100 seconds of a
+    # 352-second check. What has to be private is the container a store might
+    # mutate, and `_shallow` copies exactly that.
+    enrolled = [(song_id, _shallow(value)) for song_id, value in prints[0]]
+    asked = _shallow(prints[1])
     try:
-        for song_id, signal in songs.items():
-            enroll_call(song_id, _run(fingerprint_chain, signal, sample_rate))
+        for song_id, fingerprints in enrolled:
+            enroll_call(song_id, fingerprints)
     except TypeError as error:
         # A signature mismatch is not a wrong function, it is a different
         # arrangement of the same one. The caller retries; see
@@ -286,10 +368,9 @@ def _attempt(fingerprint_chain, enroll_call, query_call, songs, sample_rate):
             type(error).__name__, str(error)[:120]
         )
 
-    target = "fixture_a"
-    clip = fixture_clip(songs[target], sample_rate)
+    target = TARGET
     try:
-        answer = query_call(_run(fingerprint_chain, clip, sample_rate))
+        answer = query_call(asked)
     except BaseException as error:  # noqa: BLE001
         return False, "querying raised {}: {}".format(
             type(error).__name__, str(error)[:120]
@@ -299,6 +380,24 @@ def _attempt(fingerprint_chain, enroll_call, query_call, songs, sample_rate):
     if best == target:
         return True, "identified {} from a two-second clip".format(target)
     return False, "asked for {} and got {}".format(target, best if best else repr(answer)[:60])
+
+
+def _shallow(value: Any) -> Any:
+    """A private copy of the container, sharing whatever is inside it.
+
+    Teams return fingerprints as a list of tuples, a numpy array, or a dict of
+    those. Each of those is copied one level down, which is the level a store
+    can mutate. The tuples inside cannot be changed by anyone, so copying them
+    protects nothing and costs the search a third of its running time.
+    """
+
+    if isinstance(value, list):
+        return list(value)
+    if isinstance(value, dict):
+        return dict(value)
+    if isinstance(value, np.ndarray):
+        return value.copy()
+    return value
 
 
 def _run(chain: Sequence[Any], signal: np.ndarray, sample_rate: int) -> Any:
