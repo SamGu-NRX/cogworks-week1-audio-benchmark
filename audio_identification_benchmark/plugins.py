@@ -219,3 +219,30 @@ class AudioIdentificationBenchmark:
         """Nothing to download: the corpus is generated and hash-verified."""
 
         return {"ready": True, "path": "", "message": "corpus is generated locally"}
+
+    def discovery(self) -> Any:
+        """What to look for in a repository that never packaged itself.
+
+        Zero of the thirteen 2026 capstones have a ``pyproject.toml``, a
+        ``setup.py``, or a submission entry point, so asking a team to install
+        their own code is asking for a step none of them took. Instead the
+        benchmark says what its task is -- what goes into the first stage,
+        what counts as having done the job -- and ``cogbench.resolve`` searches
+        their repository against that by running their functions.
+
+        Built lazily because it renders two songs and importing a plugin
+        should not.
+        """
+
+        from cogbench.discovery_spec import DiscoverySpec
+
+        from .roles import FINGERPRINT_ROLE, accepts, enroll_arrangements, fixture_songs
+
+        first = next(iter(fixture_songs(SAMPLE_RATE).values()))
+        return DiscoverySpec(
+            chain_role=FINGERPRINT_ROLE,
+            fixture=(first, SAMPLE_RATE),
+            accepts=accepts,
+            arrangements=enroll_arrangements,
+            hints=("week1", "week 1", "audio", "capstone"),
+        )
