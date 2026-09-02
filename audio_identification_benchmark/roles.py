@@ -443,15 +443,16 @@ def _shallow(value: Any) -> Any:
 def _run(chain: Sequence[Any], signal: np.ndarray, sample_rate: int) -> Any:
     """Push audio through a resolved chain, changing nothing on the way."""
 
-    value = chain[0].call(signal, sample_rate)
+    value = getattr(chain[0], "bound", chain[0].call)(signal, sample_rate)
     for step in chain[1:]:
+        call = getattr(step, "bound", step.call)
         try:
-            value = step.call(value)
+            value = call(value)
         except BaseException:  # noqa: BLE001
             # The same unpacking the search used: their spectrogram may be a
             # tuple and their peak finder may want the array inside it.
             if isinstance(value, tuple) and value:
-                value = step.call(value[0])
+                value = call(value[0])
             else:
                 raise
     return value

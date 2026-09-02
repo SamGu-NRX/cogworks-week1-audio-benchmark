@@ -84,10 +84,15 @@ class AudioIdentificationBenchmark:
     #: measurably fails on, and the failure is worth showing.
     metric_help = {
         "identification_score": (
-            "Open-set F1 over every scored clip: precision against how often an "
-            "answer was right, recall against how often one was given. Answering "
-            "everything collapses precision; never answering zeroes recall. This "
-            "is the leaderboard number."
+            "How often the right song came back first, averaged over eight "
+            "equally weighted conditions: clean, short, two noise levels, and "
+            "four pitch shifts. Half of those are pitch, which the course never "
+            "asks for, because it is the only condition measured to separate "
+            "teams: an audited student sweep held 0.97 through the worst noise "
+            "and collapsed to 10-25% at one or two semitones. Clips of songs "
+            "that were never enrolled are not counted here; they are reported "
+            "beside it as confident false matches. This is the leaderboard "
+            "number."
         ),
         "clean_top1": (
             "Studio-quality clips, no perturbation. The capstone's own baseline "
