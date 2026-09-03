@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import atexit
+import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
@@ -218,6 +220,7 @@ class AudioIdentificationBenchmark:
         """
 
         scratch = Path(tempfile.mkdtemp(prefix="cogworks-week1-"))
+        atexit.register(shutil.rmtree, scratch, ignore_errors=True)
         return Resources(sample_rate=SAMPLE_RATE, scratch_dir=scratch, top_k=TOP_K)
 
     def model_cache_status(self) -> Dict[str, Any]:
@@ -253,7 +256,14 @@ class AudioIdentificationBenchmark:
 
         from cogbench.discovery_spec import DiscoverySpec
 
-        from .roles import FINGERPRINT_ROLE, accepts, enroll_arrangements, fixture_songs
+        from .roles import (
+            FINGERPRINT_ROLE,
+            POST_QUERY_READERS,
+            accepts,
+            enroll_arrangements,
+            fixture_songs,
+            looks_like_an_empty_database,
+        )
 
         first = next(iter(fixture_songs(SAMPLE_RATE).values()))
         return DiscoverySpec(
@@ -262,4 +272,12 @@ class AudioIdentificationBenchmark:
             accepts=accepts,
             arrangements=enroll_arrangements,
             hints=("week1", "week 1", "audio", "capstone"),
+            # Some teams keep the database in an object or a module and some
+            # pass it to every call. The second shape needs one of their own
+            # functions to make the empty database first, and needs their own
+            # readers to turn a vote tally into song names; both are named
+            # here because what an empty database and a readable answer look
+            # like are Week 1's questions, not the resolver's.
+            factories=looks_like_an_empty_database,
+            readers=POST_QUERY_READERS,
         )

@@ -63,9 +63,14 @@ def prepare_process(scratch_dir: Optional[Path] = None) -> Path:
     sys.stdin = io.StringIO("")
 
     if scratch_dir is None:
+        import atexit
+        import shutil
         import tempfile
 
         scratch_dir = Path(tempfile.mkdtemp(prefix="cogworks-week1-"))
+        # Removed when the process ends, not here: the run reads from it
+        # until scoring is over. One directory leaked per run before this.
+        atexit.register(shutil.rmtree, scratch_dir, ignore_errors=True)
     scratch_dir = Path(scratch_dir)
     scratch_dir.mkdir(parents=True, exist_ok=True)
     os.chdir(str(scratch_dir))
