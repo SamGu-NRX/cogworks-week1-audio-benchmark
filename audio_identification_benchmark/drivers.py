@@ -83,7 +83,45 @@ def fresh_copy(samples: np.ndarray) -> np.ndarray:
     return np.array(samples, dtype=np.float32, copy=True, order="C")
 
 
+#: This package's own directory. Their code begins at the first frame below
+#: it, which is how a scored run finds the tree to report a line against: the
+#: driver holds their adapter, not the directory their files were read from.
+_OURS = Path(__file__).resolve().parent
+
+
+def _compiler_line(error: BaseException) -> Optional[str]:
+    """`Type: message at file:line`, when this came out of their own code.
+
+    None for every failure this driver reports about itself (a song enrolled
+    twice, a contract the adapter could not satisfy), because those already
+    read as sentences and a type in front of one is noise. None too when the
+    raise never reached their code.
+
+    The import is deferred because this package is published on its own and
+    its dependencies do not include cogbench; `plugins.discovery` defers the
+    same import for the same reason. Without it the message is what it was
+    before, which is a message without a line rather than no message.
+    """
+
+    try:
+        from cogbench.raised import their_line
+    except ImportError:
+        return None
+    return their_line(error, _OURS)
+
+
 def _first_line(error: BaseException) -> str:
+    """What went wrong and, when it was their code, where.
+
+    The location is the part a team acts on. `identify raised 'x'` names
+    almost nothing; `identify raised KeyError: 'x' at match.py:41` names a
+    line. The metrics count distinct messages, so both travel with the count
+    into the diagnostic a run page shows.
+    """
+
+    theirs = _compiler_line(error)
+    if theirs is not None:
+        return theirs
     text = str(error)
     return text.splitlines()[0][:220] if text else type(error).__name__
 

@@ -262,6 +262,7 @@ class AudioIdentificationBenchmark:
             accepts,
             enroll_arrangements,
             fixture_songs,
+            grades,
             looks_like_an_empty_database,
         )
 
@@ -270,6 +271,7 @@ class AudioIdentificationBenchmark:
             chain_role=FINGERPRINT_ROLE,
             fixture=(first, SAMPLE_RATE),
             accepts=accepts,
+            grades=grades,
             arrangements=enroll_arrangements,
             hints=("week1", "week 1", "audio", "capstone"),
             # Some teams keep the database in an object or a module and some

@@ -81,14 +81,12 @@ class AdaptedIdentifier:
         self._fingerprint_fn = fingerprint_fn
         self._finalize_fn = finalize_fn
         self.mappings = mappings
-        # Instructor-supplied adapters (benchmarks/adapters/) declare what
-        # wiring we wrote versus what the team wrote. Carry it through the
-        # wrapper so the run result can say so: a public leaderboard must
-        # never credit a team for code they did not write.
+        # A submission can declare which glue code supplied its callable
+        # mapping. Carry that declaration through the wrapper so a run never
+        # credits the team for code supplied by someone else.
         #
-        # Look on the defining MODULE as well as the object, because these
-        # adapters write PROVENANCE at module scope while the factory returns
-        # an instance. Checking only the instance silently found nothing.
+        # Look on the defining module as well as the object because provenance
+        # may live at module scope while the factory returns an instance.
         self.provenance = getattr(target, "PROVENANCE", None)
         if self.provenance is None:
             module = sys.modules.get(getattr(type(target), "__module__", ""))

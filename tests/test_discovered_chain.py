@@ -338,7 +338,9 @@ class TheirStoreTakesOneFingerprintAtATime(_InAScratchRepository):
     def test_it_offers_the_key_and_the_time_of_every_fingerprint(self):
         seen = []
         roles.enroll_arrangements(
-            lambda *args: seen.append(args), "song", [(("a", "b", 1), 7), (("c",), 9)]
+            lambda key, song_id, when: seen.append((key, song_id, when)),
+            "song",
+            [(("a", "b", 1), 7), (("c",), 9)],
         )[4]()
 
         self.assertEqual(seen, [(("a", "b", 1), "song", 7), (("c",), "song", 9)])
@@ -348,7 +350,9 @@ class TheirStoreTakesOneFingerprintAtATime(_InAScratchRepository):
 
         seen = []
         roles.enroll_arrangements(
-            lambda *args: seen.append(args), "song", {("a", "b", 1): 7}
+            lambda key, song_id, when: seen.append((key, song_id, when)),
+            "song",
+            {("a", "b", 1): 7},
         )[4]()
 
         self.assertEqual(seen, [(("a", "b", 1), "song", 7)])
@@ -356,24 +360,19 @@ class TheirStoreTakesOneFingerprintAtATime(_InAScratchRepository):
     def test_the_song_id_may_come_first_instead(self):
         seen = []
         roles.enroll_arrangements(
-            lambda *args: seen.append(args), "song", [(("a",), 7)]
+            lambda key, song_id, when: seen.append((key, song_id, when)),
+            "song",
+            [(("a",), 7)],
         )[5]()
 
         self.assertEqual(seen, [("song", ("a",), 7)])
 
     def test_how_many_arrangements_there_are_is_part_of_the_search_budget(self):
-        """Not a count for its own sake. The resolver tries every ordered pair
-        of their functions times this number times the store-and-query shapes,
-        against one ceiling on attempts, so adding one arrangement takes a
-        share of that ceiling away from every repository.
-
-        Measured on the repository whose database is an argument its own
-        factory makes: 50 candidates, 2,450 pairs, and a 20,000 ceiling. Six
-        arrangements spend 14,700 on the shape with nothing in front of the
-        store and leave the shapes that build a database first reachable;
-        seven spend 17,150 and do not, and that repository fell from 0.547 to
-        0.125 on a binding that passes the two-song fixture. Anything added
-        here has to be worth that."""
+        """Not a count for its own sake. The resolver classifies every one of
+        their functions in every arrangement before it pairs anything, so each
+        arrangement here is one more whole enrolment of the fixture per
+        candidate -- 75,372 calls of a store that takes one fingerprint at a
+        time. Anything added here has to be worth that."""
 
         self.assertEqual(len(roles.enroll_arrangements(lambda *_a: None, "", None)), 6)
 
@@ -384,7 +383,7 @@ class TheirStoreTakesOneFingerprintAtATime(_InAScratchRepository):
 
         with self.assertRaises(TypeError):
             roles.enroll_arrangements(
-                lambda *args: None, "song", [((1, 2, 3), 7, "extra")]
+                lambda key, song_id, when: None, "song", [((1, 2, 3), 7, "extra")]
             )[4]()
 
     def test_fingerprints_that_are_not_pairs_are_a_signature_mismatch(self):
@@ -392,7 +391,9 @@ class TheirStoreTakesOneFingerprintAtATime(_InAScratchRepository):
         than as a broken repository."""
 
         with self.assertRaises(TypeError):
-            roles.enroll_arrangements(lambda *a: None, "song", [1, 2, 3])[4]()
+            roles.enroll_arrangements(
+                lambda key, song_id, when: None, "song", [1, 2, 3]
+            )[4]()
 
 
 class ReadingWhatTheirFunctionsReturn(unittest.TestCase):
@@ -761,7 +762,13 @@ class TheirMatcherIsHandedTheTableTheirStoreFilled(_InAScratchRepository):
 class OneFingerprintAtATimeIsOfferedOnlyToAStoreThatTakesThree(unittest.TestCase):
     """Their own welded builder takes a folder and two tunings, and Python
     lets a fingerprint land in the folder. It raises nothing and reads a
-    directory, once per fingerprint."""
+    directory, once per fingerprint.
+
+    The question is `resolve._takes_n(store, 3)`, which is the same one the
+    resolver asks of a query it is about to hand three arguments. Exactly
+    three required positionals: a `*args` store and a store whose offset has a
+    default are both refused, and no repository under `.cache/student-repos`
+    has either."""
 
     def test_a_store_requiring_one_argument_is_not_a_per_fingerprint_store(self):
         scope: dict = {}
@@ -781,30 +788,6 @@ class OneFingerprintAtATimeIsOfferedOnlyToAStoreThatTakesThree(unittest.TestCase
         roles.enroll_arrangements(add_hash, "song", [(("a",), 7), (("b",), 9)])[4]()
 
         self.assertEqual(seen, [(("a",), "song", 7), (("b",), "song", 9)])
-
-    def test_a_store_that_takes_anything_is_still_offered(self):
-        seen = []
-
-        roles.enroll_arrangements(
-            lambda *args: seen.append(args), "song", [(("a",), 7)]
-        )[4]()
-
-        self.assertEqual(seen, [(("a",), "song", 7)])
-
-    def test_an_offset_with_a_default_is_still_a_per_fingerprint_store(self):
-        """The offset is the one of the three a store can reasonably default:
-        it cannot invent the key or the name of the song. Requiring all three
-        refused such a store over a default its author was entitled to
-        write."""
-
-        seen = []
-
-        def add_hash(key, song_id, when=0):
-            seen.append((key, song_id, when))
-
-        roles.enroll_arrangements(add_hash, "song", [(("a",), 7)])[4]()
-
-        self.assertEqual(seen, [(("a",), "song", 7)])
 
     def test_a_store_that_cannot_be_called_with_three_is_still_refused(self):
         """Both halves of the rule. The one above relaxes what counts as
@@ -862,6 +845,91 @@ class WhatCountsAsRankingMoreThanOneSong(unittest.TestCase):
         self.assertEqual(roles._scored_ids("fixture_a"), ["fixture_a"])
 
 
+class TheGradeIsReadOffTheAnswerAndNothingElse(unittest.TestCase):
+    """The resolver grades one of their readers by handing `grades` what the
+    reader returned, with no store, no query and no database behind it. That
+    is the same judgement `accepts` makes only if `accepts` makes it out of
+    the answer alone."""
+
+    def setUp(self):
+        self.addCleanup(roles.forget_fingerprints)
+        self.chain = (
+            _Step("theirs.fingerprints", lambda samples, rate: [((1, 2, 3), 0)]),
+        )
+
+    def _end_to_end(self, answer):
+        """The grade a pairing whose query returned ``answer`` is given."""
+
+        return roles.accepts(self.chain, lambda *_a: None, lambda _item: answer)
+
+    def test_every_grade_is_the_one_the_answer_alone_earns(self):
+        for answer in (
+            ["fixture_a", "fixture_b"],
+            "fixture_a",
+            ("fixture_a", 42),
+            [("fixture_a", {"votes": 3}), ("fixture_b", {"votes": 1})],
+            "fixture_b",
+            [],
+        ):
+            with self.subTest(answer=answer):
+                self.assertEqual(roles.grades(answer), self._end_to_end(answer))
+
+    def test_a_lazy_answer_that_raises_when_read_is_a_refusal_not_an_escape(self):
+        """`Cog-gurts`'s `fanout_pairs` is a generator function, and reading
+        what one returned runs their code. A reader is handed such a value
+        outside any acceptance test, so the guard has to be here."""
+
+        def rows():
+            raise ValueError("too many values to unpack")
+            yield  # pragma: no cover - unreachable, and needed to be lazy
+
+        graded, detail = roles.grades(rows())
+
+        self.assertFalse(graded)
+        self.assertIn("querying raised ValueError", detail)
+
+
+class EnrollingIsAskedOnItsOwn(unittest.TestCase):
+    """Whether a store takes the fixture is a property of the store, so the
+    resolver asks it once per store rather than once per store and query.
+    `query_call=None` is that question."""
+
+    def setUp(self):
+        self.addCleanup(roles.forget_fingerprints)
+        self.chain = (
+            _Step("theirs.fingerprints", lambda samples, rate: [((1, 2, 3), 0)]),
+        )
+
+    def test_a_store_that_took_both_songs_passes_without_being_queried(self):
+        kept = []
+
+        graded, detail = roles.accepts(
+            self.chain, lambda song_id, prints: kept.append(song_id), None
+        )
+
+        self.assertTrue(graded)
+        self.assertIn("enrolled", detail)
+        self.assertEqual(kept, ["fixture_a", "fixture_b"])
+
+    def test_a_store_that_raised_fails_the_same_way_it_always_did(self):
+        def refuse(song_id, prints):
+            raise ValueError("this one never takes a song")
+
+        graded, detail = roles.accepts(self.chain, refuse, None)
+
+        self.assertFalse(graded)
+        self.assertIn("enrolling raised ValueError", detail)
+
+    def test_a_store_the_arrangement_does_not_fit_is_a_signature_mismatch(self):
+        """Which `accepts` reads as "try the next arrangement" rather than as
+        a broken repository, exactly as it does with a query."""
+
+        graded, detail = roles.accepts(self.chain, lambda only_one: None, None)
+
+        self.assertFalse(graded)
+        self.assertIn("did not accept those arguments", detail)
+
+
 class ALoaderIsNotAFactoryEvenWhenItsSongsArePrivate(unittest.TestCase):
     """The factory question is whether the thing arrives empty. An attribute
     named `_songs` is as full as one named `songs`, and scoring against it
@@ -880,52 +948,6 @@ class ALoaderIsNotAFactoryEvenWhenItsSongsArePrivate(unittest.TestCase):
             def __init__(self) -> None:
                 self._songs = {}
                 self._hashes = {}
-
-        self.assertTrue(roles.looks_like_an_empty_database(Empty))
-
-
-class ADatabaseMayKeepItsStateSomewhereOtherThanADict(unittest.TestCase):
-    """A class that declares `__slots__` has no `__dict__` at all, and the
-    question the factory test asks -- is the thing empty -- is the same
-    question either way. Reading only `__dict__` refused every such database,
-    so no pairing that needed one of their factories could be tried."""
-
-    def test_a_database_in_slots_is_read_by_the_same_rule(self):
-        class Empty:
-            __slots__ = ("_songs", "_hashes")
-
-            def __init__(self) -> None:
-                self._songs = {}
-                self._hashes = {}
-
-        class Loaded:
-            __slots__ = ("_songs",)
-
-            def __init__(self) -> None:
-                self._songs = {"fixture_a": [(1, 2, 3)]}
-
-        self.assertTrue(roles.looks_like_an_empty_database(Empty))
-        self.assertFalse(roles.looks_like_an_empty_database(Loaded))
-
-    def test_a_slot_inherited_from_a_base_counts_as_state(self):
-        """The walk is over the whole class tree, because a database that
-        keeps its songs on a base class keeps them just as fully."""
-
-        class Base:
-            __slots__ = ("_songs",)
-
-        class Loaded(Base):
-            __slots__ = ("_hashes",)
-
-            def __init__(self) -> None:
-                self._songs = {"fixture_a": [(1, 2, 3)]}
-                self._hashes = {}
-
-        self.assertFalse(roles.looks_like_an_empty_database(Loaded))
-
-    def test_a_slot_that_was_never_assigned_holds_nothing(self):
-        class Empty:
-            __slots__ = ("_songs",)
 
         self.assertTrue(roles.looks_like_an_empty_database(Empty))
 

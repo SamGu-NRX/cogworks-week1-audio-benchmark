@@ -16,7 +16,7 @@ a bug in their code.
 
 from __future__ import annotations
 
-from typing import Any, List, Sequence
+from typing import Any, Sequence
 
 from .contracts import SAMPLE_RATE
 

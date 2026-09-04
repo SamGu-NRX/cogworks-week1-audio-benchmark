@@ -28,12 +28,12 @@ import io
 import os
 import sys
 import tempfile
-from types import MemberDescriptorType
-from typing import Any, List, Sequence
+from typing import Any, Sequence
 
 import numpy as np
 
 from cogbench.pipeline import Role, Stage
+from cogbench.resolve import _takes_n
 
 from . import synth
 from .contracts import SAMPLE_RATE
@@ -42,6 +42,7 @@ __all__ = [
     "FINGERPRINT_ROLE",
     "IDENTIFY_ROLE",
     "accepts",
+    "grades",
     "enroll_arrangements",
     "fixture_songs",
     "fixture_clip",
@@ -200,18 +201,6 @@ def looks_like_fingerprints(value: Any) -> bool:
     yields its keys, so such a value used to pass only by accident, when the
     key happened to be a triple, and a two-element key made it pass for the
     wrong reason. Reading the mapping as a mapping says what is true.
-
-    A flat triple is not a fingerprint here. Every Week 1 fingerprinter in the
-    ground truth returns the same two things and nothing else, four of them as
-    ``((f1, f2, dt), t)`` pairs and the fifth as a ``{(f1, f2, dt): t}``
-    mapping, so nothing in the corpus says which field of a bare ``(a, b, c)``
-    is the key and which is the time. Accepting the shape anyway was a rule
-    with no case behind it and a consumer that had to guess: `_fingerprint_items`
-    read the first two fields, so a team whose rows were ``(f1, f2, dt)`` with
-    the time nowhere in them would have had every fingerprint stored under
-    ``f1`` at offset ``f2``, and the store would not have raised. A shape the
-    benchmark cannot read a key and a time out of is refused at this step,
-    where the refusal names the step, rather than passed on and corrupted.
     """
 
     if isinstance(value, dict):
@@ -333,6 +322,12 @@ def accepts(fingerprint_chain, enroll_call, query_call, sample_rate: int = SAMPL
     scored badly by the benchmark, not refused by discovery. Two songs, one
     exact excerpt, right answer at rank 1 -- anything wired correctly passes,
     and a chain assembled from the wrong functions does not.
+
+    ``query_call`` may be None, which asks the smaller question: can this
+    store take the two fixture songs at all. Whether it can is a property of
+    the store, the arrangement and the shape it is offered in, and none of
+    those is the query -- so the resolver asks it once per store rather than
+    once per store and query, and pairs only the stores that said yes.
 
     Returns ``(passed, detail)``. The detail says what was asked and what came
     back, which is what a report shows when this is the step that failed.
@@ -504,56 +499,77 @@ def _attempt(enroll_call, query_call, prints):
             type(error).__name__, str(error)[:120]
         )
 
-    target = TARGET
+    if query_call is None:
+        return True, "enrolled both fixture songs"
+
     try:
         answer = query_call(asked)
-        # Reading the answer runs their code too, when the answer is lazy.
-        # `Cog-gurts`'s `fanout_pairs` is a generator function, so a pairing
-        # that tries it as the query returns a generator that has not run yet,
-        # and the first `next` on it raised ValueError from their own line.
-        # Outside this block that exception left `accepts` entirely and
-        # aborted the pairing search in `resolve`, which turned one unsuitable
-        # candidate into no result for the repository. Six of 2400 enumerated
-        # pairings escaped that way.
+    except BaseException as error:  # noqa: BLE001 - student code raises anything
+        return False, "querying raised {}: {}".format(
+            type(error).__name__, str(error)[:120]
+        )
+    return grades(answer)
+
+
+def grades(answer: Any):
+    """How completely one answer answers Week 1's question.
+
+    Only the answer decides. Nothing here reads the database, the store, or
+    which of their functions produced the value, so the same reading applies
+    to what their query returned and to what one of their own readers made of
+    it -- which is what lets the resolver find a reader by asking it once and
+    grading what it handed back, rather than by re-enrolling the fixture and
+    re-querying it for every candidate tail.
+
+    Reading the value runs their code too, when the value is lazy.
+    `Cog-gurts`'s `fanout_pairs` is a generator function, so a pairing that
+    tries it as the query returns a generator that has not run yet, and the
+    first `next` on it raised ValueError from their own line. Outside this
+    block that exception left `accepts` entirely and aborted the pairing
+    search in `resolve`, which turned one unsuitable candidate into no result
+    for the repository. Six of 2400 enumerated pairings escaped that way.
+
+    How completely a value answered decides which of their own functions the
+    search settles on when several work. One 2026 team wrote `query`,
+    returning the winning song, and `query_details`, returning the same winner
+    plus their whole vote tally. Both are right and the benchmark scores a
+    ranked list, so binding the first one reached cost that team every metric
+    below rank 1.
+
+    This reads what came back. It never judges their algorithm: a badly tuned
+    fanout should be scored badly by the benchmark, not preferred or refused
+    here.
+
+    Both grades come off the path scoring uses, so an accepted pairing is one
+    the scorer will read the same way the search did. `_winner` looks deeper
+    into a value than the scorer does: it reaches a song id sitting inside a
+    row the scorer throws the whole list away for, and a pairing graded on
+    that alone is one the benchmark scores at zero. Measured on the 2026
+    corpus: one team's ranked answer is `[(id, {...}), (id, {...})]`, whose
+    score beside each id is a dict `_as_float` cannot read, and all 68 of its
+    queries were rejected for an identification score of 0.0. Refusing it here
+    is what leaves the search free to keep going, into one of their own
+    readers or another of their queries.
+    """
+
+    try:
         best = _winner(answer)
         readable = _scored_ids(answer)
-    except BaseException as error:  # noqa: BLE001
+    except BaseException as error:  # noqa: BLE001 - reading their value runs it
         return False, "querying raised {}: {}".format(
             type(error).__name__, str(error)[:120]
         )
 
-    if best != target:
+    if best != TARGET:
         return False, "asked for {} and got {}".format(
-            target, best if best else repr(answer)[:60]
+            TARGET, best if best else repr(answer)[:60]
         )
-
-    # Named the right song, so this pairing works. How completely it answered
-    # decides which of their own functions the search settles on when several
-    # work. One 2026 team wrote `query`, returning the winning song, and
-    # `query_details`, returning the same winner plus their whole vote tally.
-    # Both are right and the benchmark scores a ranked list, so binding the
-    # first one reached cost that team every metric below rank 1.
-    #
-    # This reads what came back. It never judges their algorithm: a badly
-    # tuned fanout should be scored badly by the benchmark, not preferred or
-    # refused here.
-    #
-    # Both grades come off the path scoring uses, so an accepted pairing is
-    # one the scorer will read the same way the search did. `_winner` looks
-    # deeper into a value than the scorer does: it reaches a song id sitting
-    # inside a row the scorer throws the whole list away for, and a pairing
-    # graded on that alone is one the benchmark scores at zero. Measured on
-    # the 2026 corpus: one team's ranked answer is `[(id, {...}), (id,
-    # {...})]`, whose score beside each id is a dict `_as_float` cannot read,
-    # and all 68 of its queries were rejected for an identification score of
-    # 0.0. Refusing it here is what leaves the search free to keep going,
-    # into one of their own readers or another of their queries.
     if len(readable) > 1:
-        return 1.0, "identified {} and ranked the rest".format(target)
-    if target in readable:
-        return 0.5, "identified {} from a two-second clip".format(target)
+        return 1.0, "identified {} and ranked the rest".format(TARGET)
+    if TARGET in readable:
+        return 0.5, "identified {} from a two-second clip".format(TARGET)
     return False, "named {} in an answer the benchmark cannot read: {}".format(
-        target, repr(answer)[:60]
+        TARGET, repr(answer)[:60]
     )
 
 
@@ -703,22 +719,11 @@ def enroll_arrangements(store, song_id: str, fingerprints: Any):
 #: `enroll_arrangements` already answers for a whole song, by trying both.
 #:
 #: A third order, the offset before the id, is a signature somebody could
-#: write and is deliberately not offered. Its cost is not the loop, it is the
-#: count: the resolver enumerates every ordered pair of a repository's
-#: functions times this many arrangements times the store-and-query shapes,
-#: against one ceiling on attempts. Measured on the repository whose database
-#: is an argument its own factory makes: 50 candidates, so 2,450 pairs, and
-#: the shape with nothing in front of the store costs 2,450 x len(orders) of
-#: a 20,000 ceiling. At two orders that is 14,700 and the four shapes that
-#: build a database first are still reachable; at three it is 17,150 and they
-#: are not, so the search never reaches the pairing that binds and settles
-#: for the best thing the first shape offered -- a metadata table filled with
-#: songs named after fingerprints, which passes the two-song fixture and
-#: scores 0.125 where the real binding scores 0.547. Adding an order costs
-#: every repository a seventh of its budget to serve none of them yet.
-#:
-#: What would make it affordable is not here: the ceiling and the order the
-#: shapes are enumerated in belong to the resolver.
+#: write and is deliberately not offered, because no repository in
+#: `.cache/student-repos` writes one. Each order is a whole enrolment of the
+#: fixture per store the resolver classifies, and for a store called once per
+#: fingerprint that is 75,372 calls; paying it to serve nobody is the wrong
+#: trade until a repository needs it.
 _PER_FINGERPRINT_ORDERS = (
     (0, 1, 2),
     (1, 0, 2),
@@ -757,63 +762,22 @@ def _one_at_a_time(store, song_id: str, fingerprints: Any, *, order: int):
 
     A store this cannot be called on is not one of these, and offering it one
     anyway is expensive rather than merely wrong: the loop runs once per
-    fingerprint, which is 37,686 calls for one four-second song. `_takes_three`
-    is that question and carries what getting it wrong cost.
+    fingerprint, which is 37,686 calls for one four-second song. The resolver
+    asks that same question of a query it is about to hand three arguments
+    (`resolve._takes_n`), so it is asked here with the same predicate rather
+    than with a second one that answered differently. The two disagreed on six
+    candidates across the five Week 1 repositories in `.cache/student-repos`
+    and on none of the stores that bind; every disagreement was a function
+    whose third parameter has a default and whose real job takes two, which is
+    the shape this loop must refuse anyway.
     """
 
-    if not _takes_three(store):
+    if not _takes_n(store, 3):
         raise TypeError("this store does not take a fingerprint, a song id and a time")
     first, second, third = _PER_FINGERPRINT_ORDERS[order]
     for key, when in _fingerprint_items(fingerprints):
         parts = (key, song_id, when)
         store(parts[first], parts[second], parts[third])
-
-
-def _takes_three(store: Any) -> bool:
-    """Whether their store can be called with a fingerprint, an id and a time.
-
-    Two questions, and both have to be answered yes. The signature has to
-    bind three positional arguments at all, which is what refuses a store
-    that wants two or five. And at least two of the three have to be
-    required, which is what refuses a function whose real job takes one
-    argument and whose other two parameters are tunings.
-
-    The second is not symmetry. A per-fingerprint store cannot invent the key
-    or the name of the song, so those two arrive with every call; the offset
-    is the one a store can reasonably default to zero, and requiring all
-    three refused such a store over a default it was entitled to write. What
-    the second rule keeps out is measured: one repository's
-    ``build_song_database(songs_folder, fanout=15, percentile=75)`` requires
-    one argument, so a fingerprint key landed in ``songs_folder`` and the two
-    halves of the fingerprint in the two tunings. It raised nothing -- it
-    globbed a directory and returned an empty database, 75,372 times per
-    pairing, at 300 ms an attempt against 15 ms for every other store.
-
-    A function taking ``*args`` is allowed through: it accepts whatever it is
-    given by construction, and nothing about its signature says it is not a
-    per-fingerprint store. Anything whose signature cannot be read is allowed
-    through too, because a builtin or a C-level callable is not evidence
-    either way and refusing one would refuse a database that works.
-    """
-
-    try:
-        signature = inspect.signature(store)
-    except (TypeError, ValueError):
-        return True
-    parameters = list(signature.parameters.values())
-    if any(p.kind is inspect.Parameter.VAR_POSITIONAL for p in parameters):
-        return True
-    try:
-        signature.bind(None, None, None)
-    except TypeError:
-        return False
-    required = [
-        p
-        for p in parameters
-        if p.default is inspect.Parameter.empty
-        and p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-    ]
-    return len(required) >= 2
 
 
 def _fingerprint_items(fingerprints: Any):
@@ -892,43 +856,20 @@ def looks_like_an_empty_database(candidate: Any) -> bool:
 def _state_of(made: Any):
     """Everything a freshly built object holds, or None if that is unreadable.
 
-    An object keeps its attributes in a ``__dict__``, in slots, or in both,
-    and reading only the first refused every database declaring
-    ``__slots__``: that object has no ``__dict__`` at all, so a factory that
-    returns one looked like an object whose state could not be read and no
-    pairing that needed a factory could be tried. A class is free to declare
-    slots for the same reason it is free not to, and the question this
-    predicate asks -- is the thing empty -- is the same question either way.
+    None means no state was found, which is not the same as finding it empty:
+    a C-level object exposing no attributes at all is not evidence that it is
+    a database with nothing in it.
 
-    Slots are read through their descriptors rather than by name so the walk
-    finds them under the names Python actually stored them under. A slot
-    whose name begins with two underscores is stored mangled, and looking it
-    up by the name in ``__slots__`` would miss it and read a full database as
-    an empty one, which is the expensive direction: see the note above about
-    private attributes on `looks_like_an_empty_database`. A slot that was
-    never assigned holds nothing and is skipped.
-
-    None means neither kind of state was found, which is not the same as
-    finding it empty: a C-level object exposing no attributes at all is not
-    evidence that it is a database with nothing in it.
+    Slots used to be walked here as well, through their member descriptors.
+    Nothing under `.cache/student-repos` declares ``__slots__``, so that walk
+    served no repository, and the cost of not having it is bounded: an object
+    that keeps its state in slots reads as one whose state cannot be read, is
+    refused as a factory, and the repository is tried in the shapes that do
+    not need one.
     """
 
-    values: List[Any] = []
-    found = False
     attributes = getattr(made, "__dict__", None)
-    if isinstance(attributes, dict):
-        found = True
-        values.extend(attributes.values())
-    for owner in type(made).__mro__:
-        for member in vars(owner).values():
-            if not isinstance(member, MemberDescriptorType):
-                continue
-            found = True
-            try:
-                values.append(member.__get__(made, owner))
-            except AttributeError:
-                continue
-    return values if found else None
+    return list(attributes.values()) if isinstance(attributes, dict) else None
 
 
 def _has_contents(value: Any) -> bool:
