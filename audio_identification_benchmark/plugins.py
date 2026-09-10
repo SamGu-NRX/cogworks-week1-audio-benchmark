@@ -67,6 +67,38 @@ class AudioIdentificationBenchmark:
         "median_identify_seconds",
     }
 
+    #: What kind of number each one is, so the run page can draw it without
+    #: knowing any metric's name. Only the keys this benchmark's own text
+    #: settles are listed; a key that is absent renders exactly as it always
+    #: has, one row with an arrow saying which direction is better.
+    #:
+    #: That arrow is an assertion about the submission, and on a floor it is
+    #: false. `chance_top1` is 1/N for a catalog of N songs and
+    #: `trivial_baseline_top1` is "a property of the corpus, not of the
+    #: submission" (see `score` below), so telling a student to raise either
+    #: is telling them to change the dataset. Both are the scale the
+    #: identification score is read against, which is what `metric_relations`
+    #: says.
+    metric_roles = {
+        "chance_top1": "floor",
+        "trivial_baseline_top1": "floor",
+        # "Reported as its own labeled column and deliberately kept out of the
+        # primary metric" (metrics.py, margin_auc), and "Reported, never
+        # scored" (metric_help, median_identify_seconds). Neither is part of
+        # the score, and a reader has no way to guess that from the number.
+        "margin_separation": "reported",
+        "median_identify_seconds": "reported",
+    }
+
+    #: Which metric each floor belongs beside. Both are floors of the primary,
+    #: and the help text says reading them together is the point: beating
+    #: chance is not evidence of a working pipeline, beating the trivial
+    #: baseline is the first sign that the fingerprinting does something.
+    metric_relations = {
+        "chance_top1": "identification_score",
+        "trivial_baseline_top1": "identification_score",
+    }
+
     #: What each metric measures, in the course's own vocabulary, and which
     #: part of the capstone it comes from.
     #:
