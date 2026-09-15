@@ -14,10 +14,11 @@ failures:
 ``top_k``
     gold is in the list but not first.
 ``ranking_failure``
-    gold is in the list but below rank k. Its position alone does not show
-    why: the tally, the fingerprints, or both.
+    gold is in the list but below rank k. Its position does not show why it
+    sits there.
 ``retrieval_failure``
-    gold is absent entirely: no shared fingerprints at all.
+    gold is absent from the list. Whether nothing matched it, or something
+    did and the list did not reach it, is not visible here.
 
 That last split is what makes a mystery result readable. A sample-rate
 mismatch and a spectrogram that never resamples both present as near-total
@@ -361,16 +362,17 @@ def _diagnostics(
 
     if scored and metrics["retrieval_failure_rate"] > 0.9:
         lines.append(
-            "Almost every query came back with no shared fingerprints at all, which "
-            "usually means your database and your queries are in different hash spaces. "
-            "Check that one code path resamples both, and that the times you store are "
-            "the same units you compare."
+            "Almost every query came back without the right song anywhere in the "
+            "list. Check that one code path resamples both your database and your "
+            "queries, and that the times you store are the same units you compare: "
+            "queries and a database in different hash spaces share nothing to match."
         )
     elif scored and metrics["retrieval_failure_rate"] > 0.4:
         lines.append(
-            "{:.0%} of queries found no candidate at all. Retrieval, not ranking, is "
-            "what is failing: the clip's fingerprints are not landing on the same keys "
-            "the database stored.".format(metrics["retrieval_failure_rate"])
+            "{:.0%} of queries came back without the right song in the list at all, "
+            "so the tally is not where they are being lost. Check that a query clip "
+            "lands on the same keys the database stored for "
+            "it.".format(metrics["retrieval_failure_rate"])
         )
 
     if scored and metrics["ranking_failure_rate"] > 0.15:
@@ -411,10 +413,10 @@ def _diagnostics(
         rate = out_of_set_confident / float(out_of_set_total)
         if rate > 0.9:
             lines.append(
-                "Every clip from a song that was never enrolled still came back with a "
-                "candidate. Nothing in the assignment required an abstain path, so this "
-                "does not affect the score, but a minimum tally or a first-to-second "
-                "ratio is what would give you one."
+                "{:.0%} of clips from songs that were never enrolled still came back "
+                "with a candidate. Nothing in the assignment required an abstain path, "
+                "so this does not affect the score, but a minimum tally or a "
+                "first-to-second ratio is what would give you one.".format(rate)
             )
         elif rate < 0.1:
             lines.append(
@@ -424,10 +426,9 @@ def _diagnostics(
 
     if "margin_separation" not in metrics:
         lines.append(
-            "Margin separation is not measured: there was no first-to-second margin to "
-            "read on both sides (identify returned ranked ids without scores, or no "
-            "out-of-database query produced one). Return (song_id, score) pairs to get "
-            "this column."
+            "Margin separation is not measured: there was no first-to-second margin "
+            "to read on both sides. Return (song_id, score) pairs from identify, for "
+            "in-database and out-of-database queries alike, to get this column."
         )
 
     if "single_id" in shapes:
