@@ -14,8 +14,8 @@ failures:
 ``top_k``
     gold is in the list but not first.
 ``ranking_failure``
-    gold is in the list but below rank k: the fingerprints matched and the
-    vote tally put something else on top.
+    gold is in the list but below rank k. Its position alone does not show
+    why: the tally, the fingerprints, or both.
 ``retrieval_failure``
     gold is absent entirely: no shared fingerprints at all.
 
@@ -374,19 +374,21 @@ def _diagnostics(
         )
 
     if scored and metrics["ranking_failure_rate"] > 0.15:
-        # Two different defects land here, and which one it is depends on
-        # whether the submission returns every song with at least one hash
-        # hit. A small catalog plus a permissive candidate list turns the
-        # hash-space mismatch below into ranking failure rather than
-        # retrieval failure (measured on the test tier: a database built at
-        # 16 kHz and queried at 44.1 kHz kept gold in the list but dropped
-        # its votes from a median of 48 to 8), so both causes are named.
+        # More than one defect lands here, and this rate does not separate
+        # them: the outcome is read off gold's position in the returned list
+        # (`classify_outcome`) and nothing else. A small catalog plus a
+        # permissive candidate list turns the hash-space mismatch below into
+        # ranking failure rather than retrieval failure. Measured on the
+        # test tier: a database built at 16 kHz and queried at 44.1 kHz kept
+        # gold in the list and dropped its votes from a median of 48 to 8.
+        # So this names checks rather than a cause.
         lines.append(
             "{:.0%} of queries had the right song somewhere in the list but not near the "
-            "top. Retrieval found something, so this is the tally losing, not the "
-            "fingerprints: check that you count matches per time offset rather than "
-            "summing every hash hit, and that the same code path resamples both what you "
-            "enroll and what you query.".format(metrics["ranking_failure_rate"])
+            "top. Two things worth checking: that you count matches per time offset "
+            "rather than summing every hash hit, and that the same code path resamples "
+            "both what you enroll and what you query; a database built at one sample "
+            "rate and queried at another keeps the right song in the list but on a "
+            "fraction of the votes.".format(metrics["ranking_failure_rate"])
         )
 
     if metrics["clean_top1"] > 0.5 and metrics["pitch_top1"] < 0.25:
