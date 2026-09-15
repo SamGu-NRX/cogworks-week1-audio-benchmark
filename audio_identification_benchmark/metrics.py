@@ -369,10 +369,10 @@ def _diagnostics(
         )
     elif scored and metrics["retrieval_failure_rate"] > 0.4:
         lines.append(
-            "{:.0%} of queries came back without the right song in the list at all, "
-            "so the tally is not where they are being lost. Check that a query clip "
-            "lands on the same keys the database stored for "
-            "it.".format(metrics["retrieval_failure_rate"])
+            "{:.0%} of queries came back without the right song in the list at all. "
+            "Check that a query clip lands on the same keys the database stored for "
+            "it, and that your candidate list is not cutting it off before it gets "
+            "there.".format(metrics["retrieval_failure_rate"])
         )
 
     if scored and metrics["ranking_failure_rate"] > 0.15:

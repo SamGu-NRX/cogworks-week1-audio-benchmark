@@ -152,9 +152,9 @@ class AudioIdentificationBenchmark:
         ),
         "retrieval_failure_rate": (
             "Share of clips where the right song was not in the returned list at "
-            "all. Peak-picking, fanout, and a sample-rate mismatch between enroll "
-            "and query are the usual places to look: each one stops a query's "
-            "fingerprints landing on the keys the database stored."
+            "all. Problems in peak-picking or fanout, and sample-rate mismatches "
+            "between enroll and query, are the usual places to look: each can stop "
+            "a query's fingerprints landing on the keys the database stored."
         ),
         "ranking_failure_rate": (
             "Share of clips where the right song was in the list but below the top "
