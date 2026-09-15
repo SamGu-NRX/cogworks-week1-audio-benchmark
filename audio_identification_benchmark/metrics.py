@@ -14,10 +14,11 @@ failures:
 ``top_k``
     gold is in the list but not first.
 ``ranking_failure``
-    gold is in the list but below rank k: the fingerprints matched and the
-    vote tally put something else on top.
+    gold is in the list but below rank k. Its position does not show why it
+    sits there.
 ``retrieval_failure``
-    gold is absent entirely: no shared fingerprints at all.
+    gold is absent from the list. Whether nothing matched it, or something
+    did and the list did not reach it, is not visible here.
 
 That last split is what makes a mystery result readable. A sample-rate
 mismatch and a spectrogram that never resamples both present as near-total
@@ -361,32 +362,35 @@ def _diagnostics(
 
     if scored and metrics["retrieval_failure_rate"] > 0.9:
         lines.append(
-            "Almost every query came back with no shared fingerprints at all, which "
-            "usually means your database and your queries are in different hash spaces. "
-            "Check that one code path resamples both, and that the times you store are "
-            "the same units you compare."
+            "Almost every query came back without the right song anywhere in the "
+            "list. Check that one code path resamples both your database and your "
+            "queries, and that the times you store are the same units you compare: "
+            "queries and a database in different hash spaces share nothing to match."
         )
     elif scored and metrics["retrieval_failure_rate"] > 0.4:
         lines.append(
-            "{:.0%} of queries found no candidate at all. Retrieval, not ranking, is "
-            "what is failing: the clip's fingerprints are not landing on the same keys "
-            "the database stored.".format(metrics["retrieval_failure_rate"])
+            "{:.0%} of queries came back without the right song in the list at all. "
+            "Check that a query clip lands on the same keys the database stored for "
+            "it, and that your candidate list is not cutting it off before it gets "
+            "there.".format(metrics["retrieval_failure_rate"])
         )
 
     if scored and metrics["ranking_failure_rate"] > 0.15:
-        # Two different defects land here, and which one it is depends on
-        # whether the submission returns every song with at least one hash
-        # hit. A small catalog plus a permissive candidate list turns the
-        # hash-space mismatch below into ranking failure rather than
-        # retrieval failure (measured on the test tier: a database built at
-        # 16 kHz and queried at 44.1 kHz kept gold in the list but dropped
-        # its votes from a median of 48 to 8), so both causes are named.
+        # More than one defect lands here, and this rate does not separate
+        # them: the outcome is read off gold's position in the returned list
+        # (`classify_outcome`) and nothing else. A small catalog plus a
+        # permissive candidate list turns the hash-space mismatch below into
+        # ranking failure rather than retrieval failure. Measured on the
+        # test tier: a database built at 16 kHz and queried at 44.1 kHz kept
+        # gold in the list and dropped its votes from a median of 48 to 8.
+        # So this names checks rather than a cause.
         lines.append(
             "{:.0%} of queries had the right song somewhere in the list but not near the "
-            "top. Retrieval found something, so this is the tally losing, not the "
-            "fingerprints: check that you count matches per time offset rather than "
-            "summing every hash hit, and that the same code path resamples both what you "
-            "enroll and what you query.".format(metrics["ranking_failure_rate"])
+            "top. Two things worth checking: that you count matches per time offset "
+            "rather than summing every hash hit, and that the same code path resamples "
+            "both what you enroll and what you query. In one measured case a database "
+            "built at 16 kHz and queried at 44.1 kHz kept the right song in the list "
+            "on a median of 8 votes instead of 48.".format(metrics["ranking_failure_rate"])
         )
 
     if metrics["clean_top1"] > 0.5 and metrics["pitch_top1"] < 0.25:
@@ -409,10 +413,10 @@ def _diagnostics(
         rate = out_of_set_confident / float(out_of_set_total)
         if rate > 0.9:
             lines.append(
-                "Every clip from a song that was never enrolled still came back with a "
-                "candidate. Nothing in the assignment required an abstain path, so this "
-                "does not affect the score, but a minimum tally or a first-to-second "
-                "ratio is what would give you one."
+                "{:.0%} of clips from songs that were never enrolled still came back "
+                "with a candidate. Nothing in the assignment required an abstain path, "
+                "so this does not affect the score, but a minimum tally or a "
+                "first-to-second ratio is what would give you one.".format(rate)
             )
         elif rate < 0.1:
             lines.append(
@@ -422,10 +426,9 @@ def _diagnostics(
 
     if "margin_separation" not in metrics:
         lines.append(
-            "Margin separation is not measured: there was no first-to-second margin to "
-            "read on both sides (identify returned ranked ids without scores, or no "
-            "out-of-database query produced one). Return (song_id, score) pairs to get "
-            "this column."
+            "Margin separation is not measured: there was no first-to-second margin "
+            "to read on both sides. Return (song_id, score) pairs from identify, for "
+            "in-database and out-of-database queries alike, to get this column."
         )
 
     if "single_id" in shapes:

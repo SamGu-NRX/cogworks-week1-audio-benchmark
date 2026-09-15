@@ -151,15 +151,15 @@ class AudioIdentificationBenchmark:
             "the course teaches, shown rather than hidden."
         ),
         "retrieval_failure_rate": (
-            "Share of clips where the right song shared no fingerprint at all "
-            "with the query. This is a fingerprinting problem: peak-picking, "
-            "fanout, or a sample-rate mismatch between enroll and query."
+            "Share of clips where the right song was not in the returned list at "
+            "all. Problems in peak-picking or fanout, and sample-rate mismatches "
+            "between enroll and query, are the usual places to look: each can stop "
+            "a query's fingerprints landing on the keys the database stored."
         ),
         "ranking_failure_rate": (
-            "Share of clips where the right song was found but something else won "
-            "the tally. This is a voting problem, not a fingerprinting one -- the "
-            "capstone's tally step, where votes must be counted per time offset "
-            "rather than summed over every hash hit."
+            "Share of clips where the right song was in the list but below the top "
+            "few. The capstone's tally step is one place to look, where votes must "
+            "be counted per time offset rather than summed over every hash hit."
         ),
         "margin_separation": (
             'The capstone\'s "how much larger is the leading tally than the '
