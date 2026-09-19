@@ -302,7 +302,7 @@ class TheirDatabaseIsAnArgumentTheirOwnFactoryMakes(_InAScratchRepository):
 
         found = _resolved(FACTORY_AND_READERS, self.tmp)
         by_label = {
-            step.label: step for step in _every_candidate(found.discovery)
+            step.label: step for step in _every_candidate(self.tmp)
         }
 
         self.assertTrue(
@@ -984,11 +984,21 @@ def _score(found) -> float:
         os.chdir(previous)
 
 
-def _every_candidate(discovery):
+def _every_candidate(tmp: Path):
+    """Every function and method the search could have offered, read from the
+    scratch repository itself. The resolver lets its reading of the repository
+    go when it hands the binding over, so there is no namespace to ask
+    afterwards; the file the test wrote is the same population."""
+
+    import importlib.util
+
     from cogbench.pipeline import callables_in, instances_in, methods_of
 
-    found = list(callables_in(discovery.namespace))
-    for label, instance in instances_in(discovery.namespace):
+    spec = importlib.util.spec_from_file_location("theirs", tmp / "theirs.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    found = list(callables_in([module]))
+    for label, instance in instances_in([module]):
         found.extend(methods_of(label, instance))
     return found
 
