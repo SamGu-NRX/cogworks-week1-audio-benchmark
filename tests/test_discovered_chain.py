@@ -300,17 +300,21 @@ class TheirDatabaseIsAnArgumentTheirOwnFactoryMakes(_InAScratchRepository):
         because a loader that returns yesterday's database would score their
         data rather than the benchmark's."""
 
-        found = _resolved(FACTORY_AND_READERS, self.tmp)
-        by_label = {
-            step.label: step for step in _every_candidate(found.discovery)
-        }
+        from cogbench._namespace import Project
 
-        self.assertTrue(
-            roles.looks_like_an_empty_database(by_label["theirs.create_database"])
-        )
-        self.assertFalse(
-            roles.looks_like_an_empty_database(by_label["theirs.get_sorted_matches"])
-        )
+        (self.tmp / "theirs.py").write_text(FACTORY_AND_READERS)
+        # A resolved submission releases its search namespace. This predicate
+        # check owns a live reading for exactly as long as it uses candidates.
+        with Project(self.tmp, {}) as project, project.running():
+            by_label = {
+                step.label: step for step in _every_candidate(project.found)
+            }
+            self.assertTrue(
+                roles.looks_like_an_empty_database(by_label["theirs.create_database"])
+            )
+            self.assertFalse(
+                roles.looks_like_an_empty_database(by_label["theirs.get_sorted_matches"])
+            )
 
     def test_a_scored_run_starts_from_a_database_of_their_own_with_nothing_in_it(self):
         """Proving the binding enrolled the two fixture songs into the dict
