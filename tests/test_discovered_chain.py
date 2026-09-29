@@ -300,17 +300,21 @@ class TheirDatabaseIsAnArgumentTheirOwnFactoryMakes(_InAScratchRepository):
         because a loader that returns yesterday's database would score their
         data rather than the benchmark's."""
 
-        found = _resolved(FACTORY_AND_READERS, self.tmp)
-        by_label = {
-            step.label: step for step in _every_candidate(self.tmp)
-        }
+        from cogbench._namespace import Project
 
-        self.assertTrue(
-            roles.looks_like_an_empty_database(by_label["theirs.create_database"])
-        )
-        self.assertFalse(
-            roles.looks_like_an_empty_database(by_label["theirs.get_sorted_matches"])
-        )
+        (self.tmp / "theirs.py").write_text(FACTORY_AND_READERS)
+        # A resolved submission releases its search namespace. This predicate
+        # check owns a live reading for exactly as long as it uses candidates.
+        with Project(self.tmp, {}) as project, project.running():
+            by_label = {
+                step.label: step for step in _every_candidate(project.found)
+            }
+            self.assertTrue(
+                roles.looks_like_an_empty_database(by_label["theirs.create_database"])
+            )
+            self.assertFalse(
+                roles.looks_like_an_empty_database(by_label["theirs.get_sorted_matches"])
+            )
 
     def test_a_scored_run_starts_from_a_database_of_their_own_with_nothing_in_it(self):
         """Proving the binding enrolled the two fixture songs into the dict
@@ -984,21 +988,11 @@ def _score(found) -> float:
         os.chdir(previous)
 
 
-def _every_candidate(tmp: Path):
-    """Every function and method the search could have offered, read from the
-    scratch repository itself. The resolver lets its reading of the repository
-    go when it hands the binding over, so there is no namespace to ask
-    afterwards; the file the test wrote is the same population."""
-
-    import importlib.util
-
+def _every_candidate(discovery):
     from cogbench.pipeline import callables_in, instances_in, methods_of
 
-    spec = importlib.util.spec_from_file_location("theirs", tmp / "theirs.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    found = list(callables_in([module]))
-    for label, instance in instances_in([module]):
+    found = list(callables_in(discovery.namespace))
+    for label, instance in instances_in(discovery.namespace):
         found.extend(methods_of(label, instance))
     return found
 
